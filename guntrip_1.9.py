@@ -83,12 +83,20 @@ class Wind(gtk.Window):
     
     def destroy(self, widget, data=None):
         gtk.main_quit()
-        
+
+
     def plot(self, widget):
         self.func = 0
         A = [profile0.generate(0), profile1.generate(1), profile2.generate(2), profile3.generate(3), profile4.generate(4)]
         
         Z_sum = A[0][2]
+        z0 = Z_sum
+        z1 = A[1][2]
+
+        a = 5.61 
+        b = 4.6 
+
+        z_comp = (a*z1/(b*z1+a*z0))*100*(2.0/5)
         
         for i in range (1, len(A)):
             Z_sum += A[i][2]
@@ -122,11 +130,16 @@ class Wind(gtk.Window):
             Z_1 = 10
         
         lvls = np.arange(0, Z_1, inc)
+        lvls_comp = np.arange(0, 5, 0.25)
         #plot1 = self.ax1.contourf(A[0][0], A[0][1], Z_sum, zdir='z', cmap=cm.jet, alpha = 1.0, levels = lvls)
         plot1 = self.ax1.contour(A[0][0], A[0][1], Z_sum, colors='black', linewidths=1, levels=lvls)
+        plot2 = self.ax1.contourf(A[0][0], A[0][1], z_comp, levels=lvls_comp, cmap='jet')
+        #plot2 = self.ax1.contourf(A[0][0], A[0][1], Z_comp, cmap='jet')
+
         self.ax1.clabel(plot1,  fmt='%1.0f', fontsize = 12)
         #color bar added to figure not axes
-        #cbar = self.fig1.colorbar(plot1)
+        cbar = self.fig1.colorbar(plot2)
+        cbar.set_label('% Nb')
         self.canvas.draw()
         
     def plot_comp(self, widget):
@@ -141,11 +154,9 @@ class Wind(gtk.Window):
         
         Z0 = A[0][2].ravel()
         Z1 = A[1][2].ravel()
-        Z2 = A[2][2].ravel()
-        Z_sum = Z0 + Z1 + Z2
-        A = 3.58
-        B = 3.95
-        C = 5.61
+        Z_sum = Z0+Z1
+        A = 5.61 
+        B = 4.6 
         
         x_zoom = []
         y_zoom = []
@@ -153,20 +164,18 @@ class Wind(gtk.Window):
         
         
         
-        X = (A*Z0/(B*Z1+C*Z2+A*Z0))*100
-        Y = (B*Z1/(B*Z1+C*Z2+A*Z0))*100
+        Y = (B*Z1/(B*Z1+A*Z0))*100*(2.0/5)
         
         for i in range (0,len(x)):
             if (-4 <= x[i] <=4 and -4 <= y[i] <=4):
-                x_zoom.append(X[i])
+                #x_zoom.append(X[i])
                 y_zoom.append(Y[i])
                 z_zoom.append(Z_sum[i])
                 
-        print len(x_zoom)
         
-        plot1 = self.ax1.scatter(x_zoom, y_zoom, s=100, c=z_zoom, alpha = 0.5)
-        self.ax1.set_xlabel('% wt. MgO')
-        self.ax1.set_ylabel('% wt. Al2O3')
+        plot1 = self.ax1.scatter(z_zoom, y_zoom, s=100, c=z_zoom, alpha = 0.5)
+        self.ax1.set_xlabel('Film thickness')
+        self.ax1.set_ylabel('% Nb')
         cbar = self.fig1.colorbar(plot1)
         cbar.set_label('thickness, $d$, nm')
         self.canvas.draw()
@@ -175,7 +184,7 @@ class Wind(gtk.Window):
         self.func = 0
         self.gamma = 0
         self.params = [profile0.d, profile1.d, profile2.d, profile3.d, profile4.d, self.gamma]
-        self.params_range = [(0, 500), (0, 500), (0, 500), (0, 500), (0, 500), (-180, 180)]
+        self.params_range = [(0, 500), (0, 50), (0, 50), (0, 50), (0, 50), (-180, 180)]
     
         self.fig1 = Figure()
         self.canvas = FigureCanvas(self.fig1)
@@ -206,12 +215,12 @@ class Wind(gtk.Window):
 
         self.combo = gtk.combo_box_entry_new_text()
         self.combo.set_size_request(200, 50)
-        self.combo.append_text('GUN 1')
-        self.combo.append_text('GUN 2')
-        self.combo.append_text('GUN 3')
-        self.combo.append_text('GUN 4')
-        self.combo.append_text('GUN 5')
-        self.combo.append_text('Angular Offset')
+        self.combo.append_text('GUN 1 | ZnO')
+        #self.combo.append_text('GUN 2')
+        self.combo.append_text('GUN 3 | Nb2O5')
+        #self.combo.append_text('GUN 4')
+        #self.combo.append_text('GUN 5')
+        #self.combo.append_text('Angular Offset')
         self.combo.set_active(0)
         self.combo.connect("changed", self.combo_change)
 
@@ -255,9 +264,9 @@ class Wind(gtk.Window):
         gtk.main()
 
 if __name__ == "__main__":
-    profile0 = Profile((2*np.pi/5)*0, 250)
-    profile1 = Profile((2*np.pi/5)*1, 5)
-    profile2 = Profile((2*np.pi/5)*2, 250)
+    profile0 = Profile((2*np.pi/5)*0, 300)
+    profile1 = Profile((2*np.pi/5)*1, 10)
+    profile2 = Profile((2*np.pi/5)*2, 10)
     profile3 = Profile((2*np.pi/5)*3, 0)
     profile4 = Profile((2*np.pi/5)*4, 0)
     window = Wind()
